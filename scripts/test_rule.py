@@ -6,7 +6,7 @@ import random
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ai_engine.utils.load_logs import load_logs
-from backend.services.rule_services import rule_predict
+from backend.services.rule_services_v2 import rule_predict_v2 as rule_predict
 
 
 if __name__ == "__main__":
