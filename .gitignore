@@ -2,17 +2,17 @@
 # DATA (VERY IMPORTANT)
 # -----------------------------
 data/
+Dataset/
 *.log
 *.csv
 *.txt
 
-# Your Hadoop dataset folder
-Dataset/
-
 # -----------------------------
-# MODELS (from Colab)
+# MODELS (CRITICAL - DO NOT PUSH)
 # -----------------------------
-ai_engine/saved_models/
+ai_engine/models/nlp/model.pkl
+ai_engine/models/nlp/vectorizer.pkl
+ai_engine/models/
 *.pkl
 *.npy
 *.index
@@ -46,7 +46,7 @@ env/
 Thumbs.db
 
 # -----------------------------
-# NOTEBOOK OUTPUTS (OPTIONAL)
+# NOTEBOOK OUTPUTS
 # -----------------------------
 *.ipynb_checkpoints
 
@@ -55,3 +55,4 @@ Thumbs.db
 # -----------------------------
 *.tmp
 *.temp
+```

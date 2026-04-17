@@ -44,7 +44,7 @@ Due to large size, the dataset is **not included in this repository**.
 
 📥 **Dataset Source:** Hadoop Log Dataset
 📥 **Dataset Location (Google Drive):**
-👉 ""https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view?usp=sharing""
+👉 "https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view?usp=sharing"
 
 
 ---

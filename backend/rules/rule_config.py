@@ -6,9 +6,15 @@ RULES = {
             r"error",
             r"denied",
             r"segmentation fault",
-            r"nullpointer"
+            r"nullpointer",
+            r"crash",
+            r"fatal",
+            r"abort",
+            r"unable to",
+            r"cannot",
+            r"failure"
         ],
-        "weight": 3
+    "weight": 5   
     },
     "WARNING": {
         "patterns": [
@@ -16,22 +22,22 @@ RULES = {
             r"retry",
             r"slow",
             r"timeout",
-            r"deprecated"
+            r"deprecated",
+            r"delay",
+            r"latency",
+            r"high usage",
+            r"memory pressure",
+            r"throttle"
         ],
-        "weight": 2
-    },
+    "weight": 3
+    },  
     "INFO": {
         "patterns": [
-            r"info",
             r"start",
-            r"starting",
-            r"started",
             r"running",
             r"progress",
-            r"launch",
-            r"connected",
-            r"listening"
+            r"connected"
         ],
-        "weight": 1
+    "weight": 1
     }
 }

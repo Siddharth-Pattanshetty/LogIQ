@@ -37,16 +37,17 @@ def get_final_label(scores):
     total = sum(scores.values())
 
     if total == 0:
-        return "INFO", 0.5   
+        return "INFO", 0.4
 
     label = max(scores, key=scores.get)
+
+    if label == "INFO" and (scores["ERROR"] > 0 or scores["WARNING"] > 0):
+        if scores["ERROR"] >= scores["WARNING"]:
+            label = "ERROR"
+        else:
+            label = "WARNING"
+
     confidence = scores[label] / total
-
-    return label, round(confidence, 2)
-    label = max(scores, key=scores.get)
-    total = sum(scores.values())
-
-    confidence = scores[label] / total if total > 0 else 0
 
     return label, round(confidence, 2)
 
