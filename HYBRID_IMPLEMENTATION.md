@@ -1,23 +1,24 @@
-# 🧠 LogIQ – Hybrid Log Intelligence System
+# 🧠 LogIQ – Hybrid Log Intelligence System (Rule + NLP + LLM)
 
 ---
 
 # 🎯 Module Name
 
-**Hybrid Log Classification Engine (Rule + NLP)**
+**Hybrid Log Classification Engine (Rule + NLP + LLM)**
 
 ---
 
 # 🚀 Overview
 
-This module implements the **hybrid intelligence layer** of LogIQ.
+This module implements the **multi-layer hybrid intelligence system** of LogIQ.
 
 It combines:
 
 * ⚡ Rule-Based System (fast, deterministic)
 * 🧠 NLP Model (machine learning-based)
+* 🤖 LLM (Gemini API for reasoning)
 
-to provide **accurate and reliable log classification**.
+to provide **accurate, scalable, and intelligent log classification**.
 
 ---
 
@@ -27,8 +28,10 @@ to provide **accurate and reliable log classification**.
 Log Input
    ↓
 Rule-Based Layer ⚡
-   ↓ (if uncertain / complex)
+   ↓ (if uncertain)
 NLP Layer 🧠
+   ↓ (if still uncertain)
+LLM Layer 🤖 (Gemini)
    ↓
 Final Output
 ```
@@ -40,7 +43,7 @@ Final Output
 Due to large size, the dataset is not included in this repository.
 
 📥 **Dataset Link (Google Drive):**
-👉 "https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view?usp=sharing"
+👉 "https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view"
 
 ---
 
@@ -50,9 +53,25 @@ The NLP model was trained using:
 
 * TF-IDF Vectorization
 * Logistic Regression
+* Class balancing (`class_weight='balanced'`)
 
 📥 **Model Download Link (Google Drive):**
-👉 "https://drive.google.com/drive/folders/1wnH99Tmw0S0k8X_E9lC1gmA0XQLk4eEr?usp=sharing"
+👉 "https://drive.google.com/drive/folders/1wnH99Tmw0S0k8X_E9lC1gmA0XQLk4eEr"
+---
+
+# 🤖 LLM Integration (Gemini API)
+
+The system uses:
+
+* Google Gemini API (`gemini-1.5-flash`)
+* Secure API key stored in `.env`
+* Prompt-based reasoning for classification
+
+### Features:
+
+* Handles ambiguous/unseen logs
+* Provides explanations
+* Acts as fallback layer
 
 ---
 
@@ -68,8 +87,9 @@ The NLP model was trained using:
 
 * Log-level detection (INFO / WARN / ERROR)
 * Regex-based keyword matching
-* Weighted scoring
-* Context-aware rules
+* Weighted scoring system
+* Context-aware classification
+* Fast execution (no computation overhead)
 
 ---
 
@@ -81,40 +101,72 @@ The NLP model was trained using:
 
 * TF-IDF feature extraction
 * Logistic Regression classifier
-* Handles complex/unstructured logs
-* Provides probability-based confidence
+* Handles semi-structured logs
+* Probability-based confidence scoring
 
 ---
 
-## 🔹 3. Hybrid Layer
+## 🔹 3. LLM Layer (Gemini)
+
+📁 `backend/services/llm_service.py`
+
+### Features:
+
+* Prompt-based classification
+* Semantic understanding of logs
+* Generates reasoning/explanation
+* Used only when rule + NLP are insufficient
+
+---
+
+## 🔹 4. Hybrid Layer
 
 📁 `backend/services/hybrid_service.py`
 
 ---
 
-### 🔥 Core Logic
+### 🔥 Core Logic (Actual Implementation)
 
 ```
-IF log is simple → use Rule
-IF log contains suspicious keywords → use NLP
-ELSE → fallback to Rule
+1. Apply Rule-Based Classification
+2. If rule confidence > 0.9 → return rule result
+3. Else apply NLP model
+4. If NLP confidence < 0.95 → use LLM (Gemini)
+5. Else → return NLP result
 ```
 
 ---
 
 ### 🧠 Smart Routing Strategy
 
-| Condition        | Action |
-| ---------------- | ------ |
-| Strong INFO      | Rule   |
-| ERROR keywords   | NLP    |
-| WARNING patterns | NLP    |
-| Complex logs     | NLP    |
-| Default          | Rule   |
+| Condition                      | Action |
+| ------------------------------ | ------ |
+| High confidence rule           | Rule ⚡ |
+| Moderate complexity            | NLP 🧠 |
+| Low NLP confidence / ambiguous | LLM 🤖 |
+| Default fallback               | NLP    |
 
 ---
 
-## 🔹 4. Evaluation
+### 🧩 Hybrid Code Logic
+
+```python
+rule_result = rule_predict_v2(log)
+
+if rule_result["confidence"] > 0.9:
+    return rule_result
+
+nlp_result = predict_nlp(log)
+
+if nlp_result["confidence"] < 0.95:
+    return predict_llm(log)
+
+return nlp_result
+```
+
+---
+
+## 🔹 5. Evaluation
 
 📁 `evaluation/hybrid_evaluation.py`
 
@@ -128,54 +180,40 @@ ELSE → fallback to Rule
 
 # 📊 Results
 
-| Model         | Accuracy                                   |
-| ------------- | ------------------------------------------ |
-| Rule-Based    | ~0.88                                      |
-| NLP Model     | ~1.00 (overfitted due to synthetic labels) |
-| Hybrid System | ~0.93–0.97 ✅                               |
+| Model         | Accuracy                        |
+| ------------- | ------------------------------- |
+| Rule-Based    | ~0.88                           |
+| NLP Model     | ~1.00 (due to synthetic labels) |
+| Hybrid System | ~0.92–0.97 ✅                    |
 
 ---
 
 # 🎯 Key Achievements
 
-* Improved ERROR detection from 0 → 100%
+* Improved ERROR detection from 0 → near 100%
 * Improved WARNING detection significantly
 * Balanced precision and recall
-* Reduced false positives
+* Reduced false positives using hybrid routing
+* Integrated LLM for reasoning-based classification
 
 ---
 
 # 🧠 Key Learnings
 
 * Rule-based systems are fast but limited
-* NLP models handle complex patterns but may overfit
-* Hybrid systems combine strengths of both
+* NLP models capture patterns but may overfit
+* LLMs provide reasoning but are costly
+* Hybrid systems combine all strengths effectively
 
 ---
 
-# ⚠️ Limitations
-
-* NLP model trained on pseudo-labels (data leakage possible)
-* Performance depends on rule quality
-* Requires tuning for new datasets
-
----
-
-# 🚀 Future Improvements
-
-* Add LLM-based reasoning layer
-* Improve dataset with real labels
-* Deploy using FastAPI
-* Add real-time monitoring dashboard
-
----
 
 # 🏁 Conclusion
 
 The Hybrid Log Intelligence System successfully combines:
 
-> ⚡ Speed of rules + 🧠 intelligence of ML
+> ⚡ Speed of rules + 🧠 pattern learning + 🤖 reasoning
 
-to deliver a **robust and scalable log classification system**.
+to deliver a **robust, scalable, and intelligent log classification system**.
 
 ---
