@@ -64,7 +64,7 @@ The NLP model was trained using:
 
 The system uses:
 
-* Google Gemini API (`gemini-2.0-flash`)
+* Google Gemini API (`gemini-3-flash-preview`)
 * Secure API key stored in `.env`
 * Prompt-based reasoning for classification
 
