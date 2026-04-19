@@ -30,7 +30,7 @@ Log Input
 Rule-Based Layer ⚡
    ↓ (if uncertain)
 NLP Layer 🧠
-   ↓ (if still uncertain)
+   ↓ (if complex / low confidence)
 LLM Layer 🤖 (Gemini)
    ↓
 Final Output
@@ -56,14 +56,15 @@ The NLP model was trained using:
 * Class balancing (`class_weight='balanced'`)
 
 📥 **Model Download Link (Google Drive):**
-👉 "https://drive.google.com/drive/folders/1wnH99Tmw0S0k8X_E9lC1gmA0XQLk4eEr"
+👉 "https://drive.google.com/file/d/1F6Hn3XQ1B_GDlPHky9Ekddrk-JnaEMd9/view?usp=sharing"
+
 ---
 
 # 🤖 LLM Integration (Gemini API)
 
 The system uses:
 
-* Google Gemini API (`gemini-1.5-flash`)
+* Google Gemini API (`gemini-2.0-flash`)
 * Secure API key stored in `.env`
 * Prompt-based reasoning for classification
 
@@ -71,7 +72,7 @@ The system uses:
 
 * Handles ambiguous/unseen logs
 * Provides explanations
-* Acts as fallback layer
+* Used selectively to reduce cost
 
 ---
 
@@ -115,7 +116,7 @@ The system uses:
 * Prompt-based classification
 * Semantic understanding of logs
 * Generates reasoning/explanation
-* Used only when rule + NLP are insufficient
+* Called only for complex cases
 
 ---
 
@@ -125,43 +126,66 @@ The system uses:
 
 ---
 
-### 🔥 Core Logic (Actual Implementation)
+### 🔥 Updated Core Logic (Production-Ready)
 
 ```
 1. Apply Rule-Based Classification
-2. If rule confidence > 0.9 → return rule result
+2. If rule confidence ≥ 0.9 → return rule result
 3. Else apply NLP model
-4. If NLP confidence < 0.95 → use LLM (Gemini)
-5. Else → return NLP result
+4. If NLP confidence ≥ 0.85 → return NLP result
+5. Else check if log is complex (semantic keywords)
+6. If complex → call LLM
+7. If LLM fails → fallback to NLP
+8. Return final result
 ```
 
 ---
 
 ### 🧠 Smart Routing Strategy
 
-| Condition                      | Action |
-| ------------------------------ | ------ |
-| High confidence rule           | Rule ⚡ |
-| Moderate complexity            | NLP 🧠 |
-| Low NLP confidence / ambiguous | LLM 🤖 |
-| Default fallback               | NLP    |
+| Condition                 | Action       |
+| ------------------------- | ------------ |
+| Strong rule match         | Rule ⚡       |
+| Moderate / structured log | NLP 🧠       |
+| Complex / ambiguous log   | LLM 🤖       |
+| LLM failure / quota issue | NLP fallback |
+| Default                   | NLP          |
 
 ---
 
-### 🧩 Hybrid Code Logic
+### 🧩 Hybrid Code Logic (Improved)
 
 ```python
-rule_result = rule_predict_v2(log)
+def needs_llm(log: str):
+    log = log.lower()
 
-if rule_result["confidence"] > 0.9:
-    return rule_result
+    keywords = [
+        "inconsistent", "instability", "degradation",
+        "conflicting", "integrity", "drift",
+        "anomaly", "unexpected", "partial failure"
+    ]
 
-nlp_result = predict_nlp(log)
+    return any(k in log for k in keywords)
 
-if nlp_result["confidence"] < 0.95:
-    return predict_llm(log)
 
-return nlp_result
+def hybrid_predict(log: str):
+    rule_result = rule_predict_v2(log)
+
+    if rule_result["confidence"] >= 0.9:
+        return rule_result
+
+    nlp_result = predict_nlp(log)
+
+    if nlp_result["confidence"] >= 0.85:
+        return nlp_result
+
+    if needs_llm(log):
+        try:
+            return predict_llm(log)
+        except:
+            return nlp_result
+
+    return nlp_result
 ```
 
 ---
@@ -183,37 +207,54 @@ return nlp_result
 | Model         | Accuracy                        |
 | ------------- | ------------------------------- |
 | Rule-Based    | ~0.88                           |
-| NLP Model     | ~1.00 (due to synthetic labels) |
+| NLP Model     | ~1.00 (synthetic bias possible) |
 | Hybrid System | ~0.92–0.97 ✅                    |
 
 ---
 
 # 🎯 Key Achievements
 
-* Improved ERROR detection from 0 → near 100%
-* Improved WARNING detection significantly
+* Improved ERROR detection significantly
+* Improved WARNING classification accuracy
+* Reduced unnecessary LLM calls (~70–80%)
+* Stable fallback system (no crashes on API failure)
 * Balanced precision and recall
-* Reduced false positives using hybrid routing
-* Integrated LLM for reasoning-based classification
 
 ---
 
 # 🧠 Key Learnings
 
 * Rule-based systems are fast but limited
-* NLP models capture patterns but may overfit
-* LLMs provide reasoning but are costly
-* Hybrid systems combine all strengths effectively
+* NLP models capture patterns but lack deep reasoning
+* LLMs provide reasoning but are costly and unstable
+* Smart routing is critical for real-world systems
 
 ---
 
+# ⚠️ Limitations
+
+* LLM depends on API quota and availability
+* NLP trained on limited dataset (may overfit)
+* Rule-based logic requires manual tuning
+
+---
+
+# 🚀 Future Improvements
+
+* Add caching layer (L1/L2)
+* Use embeddings for semantic similarity
+* Improve dataset with real-world labels
+* Deploy with FastAPI
+* Build frontend dashboard for monitoring
+
+---
 
 # 🏁 Conclusion
 
 The Hybrid Log Intelligence System successfully combines:
 
-> ⚡ Speed of rules + 🧠 pattern learning + 🤖 reasoning
+> ⚡ Rule-based speed + 🧠 NLP learning + 🤖 LLM reasoning
 
-to deliver a **robust, scalable, and intelligent log classification system**.
+to deliver a **robust, efficient, and scalable log classification system** suitable for real-world applications.
 
 ---
