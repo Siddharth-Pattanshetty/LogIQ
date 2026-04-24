@@ -4,21 +4,23 @@
 
 # 🎯 Module Name
 
-**Hybrid Log Classification Engine (Rule + NLP + LLM)**
+**Hybrid Log Classification Engine**
 
 ---
 
 # 🚀 Overview
 
-This module implements the **multi-layer hybrid intelligence system** of LogIQ.
-
-It combines:
+LogIQ is a **multi-layer intelligent log classification system** that combines:
 
 * ⚡ Rule-Based System (fast, deterministic)
 * 🧠 NLP Model (machine learning-based)
 * 🤖 LLM (Gemini API for reasoning)
 
-to provide **accurate, scalable, and intelligent log classification**.
+to classify logs into:
+
+```text
+INFO | WARNING | ERROR
+```
 
 ---
 
@@ -31,7 +33,7 @@ Rule-Based Layer ⚡
    ↓ (if uncertain)
 NLP Layer 🧠
    ↓ (if complex / low confidence)
-LLM Layer 🤖 (Gemini)
+LLM Layer 🤖
    ↓
 Final Output
 ```
@@ -40,221 +42,327 @@ Final Output
 
 # 📂 Dataset
 
-Due to large size, the dataset is not included in this repository.
+Dataset is not included due to size.
 
-📥 **Dataset Link (Google Drive):**
-👉 "https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view"
+📥 **Dataset (Hadoop Logs):**
+👉 https://drive.google.com/file/d/1zrFCCohQKPjD1feFYYSNCBv8YFSI-K7P/view
 
 ---
 
 # 🤖 NLP Model
 
-The NLP model was trained using:
+📥 **Download Model Files:**
+👉 https://drive.google.com/file/d/1F6Hn3XQ1B_GDlPHky9Ekddrk-JnaEMd9/view
 
-* TF-IDF Vectorization
-* Logistic Regression
-* Class balancing (`class_weight='balanced'`)
+### Required Files:
 
-📥 **Model Download Link (Google Drive):**
-👉 "https://drive.google.com/file/d/1F6Hn3XQ1B_GDlPHky9Ekddrk-JnaEMd9/view?usp=sharing"
+```text
+logiq_model.pkl
+vectorizer.pkl
+```
 
----
+### 📥 Place them here:
 
-# 🤖 LLM Integration (Gemini API)
-
-The system uses:
-
-* Google Gemini API (`gemini-3-flash-preview`)
-* Secure API key stored in `.env`
-* Prompt-based reasoning for classification
-
-### Features:
-
-* Handles ambiguous/unseen logs
-* Provides explanations
-* Used selectively to reduce cost
+```
+ai_engine/models/nlp/
+```
 
 ---
 
-# ⚙️ Implementation Details
+# ⚙️ Installation & Setup
+
+## 🔹 Step 1: Clone Project
+
+```bash
+git clone https://github.com/Siddharth-Pattanshetty/LogIQ.git
+cd LogIQ
+```
 
 ---
 
-## 🔹 1. Rule-Based Layer
+## 🔹 Step 2: Create Virtual Environment
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+---
+
+## 🔹 Step 3: Install Dependencies
+
+```bash
+pip install fastapi uvicorn scikit-learn python-dotenv google-genai
+```
+
+---
+
+# 🔐 Gemini API Setup
+
+Create `.env` file:
+
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+---
+
+# 🧠 Implementation Details
+
+---
+
+## 🔹 1. Rule-Based Layer ⚡
 
 📁 `backend/services/rule_services_v2.py`
 
 ### Features:
 
-* Log-level detection (INFO / WARN / ERROR)
-* Regex-based keyword matching
-* Weighted scoring system
-* Context-aware classification
-* Fast execution (no computation overhead)
+* Log-level extraction (INFO / WARN / ERROR)
+* Regex-based pattern matching
+* Weighted scoring:
+
+  * ERROR → 3
+  * WARNING → 2
+  * INFO → 1
+* Context-aware logic:
+
+  * `retry + failed → ERROR`
+* Fallback:
+
+  * Default → INFO (0.5)
 
 ---
 
-## 🔹 2. NLP Layer
+### ✔ Example Rules
+
+| Pattern           | Label   |
+| ----------------- | ------- |
+| exception, failed | ERROR   |
+| timeout, retry    | WARNING |
+| started, running  | INFO    |
+
+---
+
+---
+
+## 🔹 2. NLP Layer 🧠
 
 📁 `ai_engine/models/nlp/inference.py`
 
 ### Features:
 
-* TF-IDF feature extraction
-* Logistic Regression classifier
-* Handles semi-structured logs
-* Probability-based confidence scoring
+* TF-IDF vectorization
+* Logistic Regression model
+* Confidence-based prediction
 
 ---
 
-## 🔹 3. LLM Layer (Gemini)
+## 🔹 3. LLM Layer 🤖
 
 📁 `backend/services/llm_service.py`
 
 ### Features:
 
+* Gemini API (`gemini-3-flash-preview`)
 * Prompt-based classification
-* Semantic understanding of logs
-* Generates reasoning/explanation
-* Called only for complex cases
+* Returns label + explanation
+* Used only for complex logs
 
 ---
 
-## 🔹 4. Hybrid Layer
+## 🔹 4. Hybrid Layer 🔥
 
 📁 `backend/services/hybrid_service.py`
 
 ---
 
-### 🔥 Updated Core Logic (Production-Ready)
+### 🧠 Core Logic
 
 ```
 1. Apply Rule-Based Classification
-2. If rule confidence ≥ 0.9 → return rule result
-3. Else apply NLP model
-4. If NLP confidence ≥ 0.85 → return NLP result
-5. Else check if log is complex (semantic keywords)
+2. If confidence ≥ 0.9 → RETURN
+3. Else apply NLP
+4. If confidence ≥ 0.85 → RETURN
+5. Else check complexity
 6. If complex → call LLM
 7. If LLM fails → fallback to NLP
-8. Return final result
 ```
 
 ---
 
-### 🧠 Smart Routing Strategy
-
-| Condition                 | Action       |
-| ------------------------- | ------------ |
-| Strong rule match         | Rule ⚡       |
-| Moderate / structured log | NLP 🧠       |
-| Complex / ambiguous log   | LLM 🤖       |
-| LLM failure / quota issue | NLP fallback |
-| Default                   | NLP          |
-
----
-
-### 🧩 Hybrid Code Logic (Improved)
+### 🧩 Code Logic
 
 ```python
-def needs_llm(log: str):
-    log = log.lower()
-
-    keywords = [
-        "inconsistent", "instability", "degradation",
-        "conflicting", "integrity", "drift",
-        "anomaly", "unexpected", "partial failure"
-    ]
-
-    return any(k in log for k in keywords)
-
-
 def hybrid_predict(log: str):
-    rule_result = rule_predict_v2(log)
+    rule = rule_predict_v2(log)
 
-    if rule_result["confidence"] >= 0.9:
-        return rule_result
+    if rule["confidence"] >= 0.9:
+        return rule
 
-    nlp_result = predict_nlp(log)
+    nlp = predict_nlp(log)
 
-    if nlp_result["confidence"] >= 0.85:
-        return nlp_result
+    if nlp["confidence"] >= 0.85:
+        return nlp
 
     if needs_llm(log):
         try:
             return predict_llm(log)
         except:
-            return nlp_result
+            return nlp
 
-    return nlp_result
+    return nlp
 ```
 
 ---
 
-## 🔹 5. Evaluation
+### 🧠 Smart Routing
 
-📁 `evaluation/hybrid_evaluation.py`
+| Condition   | Action |
+| ----------- | ------ |
+| Strong rule | Rule   |
+| Moderate    | NLP    |
+| Complex     | LLM    |
+| Failure     | NLP    |
 
-### Compared:
+---
 
-* Rule-based accuracy
-* NLP model accuracy
-* Hybrid system accuracy
+# ⚡ Advanced Features (Production)
+
+---
+
+## ✅ Caching
+
+* Avoid recomputation
+* Faster response
+
+---
+
+## ✅ Rate Limiting
+
+* Controls LLM usage
+* Prevents quota exhaustion
+
+---
+
+## ✅ Logging
+
+* Tracks inputs and outputs
+* Helps debugging
+
+---
+
+## ✅ Batch API
+
+* Multiple logs in one request
+
+---
+
+## ✅ Storage
+
+* Saves predictions to:
+
+```
+logs/predictions.json
+```
+
+---
+
+# 🌐 API Endpoints
+
+---
+
+## 🔹 1. Single Log
+
+```http
+POST /predict-log
+```
+
+### Request:
+
+```json
+{
+  "log": "execution halted due to conflicting states"
+}
+```
+
+---
+
+## 🔹 2. Batch Logs
+
+```http
+POST /predict-batch
+```
+
+```json
+{
+  "logs": [
+    "timeout occurred",
+    "system stable",
+    "execution failed"
+  ]
+}
+```
+
+---
+
+# 🚀 Run the Project
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+---
+
+# 🌐 Open API Docs
+
+```
+http://127.0.0.1:8000/docs
+```
 
 ---
 
 # 📊 Results
 
-| Model         | Accuracy                        |
-| ------------- | ------------------------------- |
-| Rule-Based    | ~0.88                           |
-| NLP Model     | ~1.00 (synthetic bias possible) |
-| Hybrid System | ~0.92–0.97 ✅                    |
+| Model      | Accuracy     |
+| ---------- | ------------ |
+| Rule-Based | ~0.88        |
+| NLP        | ~1.00        |
+| Hybrid     | ~0.92–0.97 ✅ |
 
 ---
 
 # 🎯 Key Achievements
 
+* Reduced LLM usage by ~70–80%
 * Improved ERROR detection significantly
-* Improved WARNING classification accuracy
-* Reduced unnecessary LLM calls (~70–80%)
-* Stable fallback system (no crashes on API failure)
 * Balanced precision and recall
-
----
-
-# 🧠 Key Learnings
-
-* Rule-based systems are fast but limited
-* NLP models capture patterns but lack deep reasoning
-* LLMs provide reasoning but are costly and unstable
-* Smart routing is critical for real-world systems
+* Stable fallback system
 
 ---
 
 # ⚠️ Limitations
 
-* LLM depends on API quota and availability
-* NLP trained on limited dataset (may overfit)
-* Rule-based logic requires manual tuning
+* LLM depends on API quota
+* NLP may overfit
+* Rules need tuning
 
 ---
 
 # 🚀 Future Improvements
 
-* Add caching layer (L1/L2)
-* Use embeddings for semantic similarity
-* Improve dataset with real-world labels
-* Deploy with FastAPI
-* Build frontend dashboard for monitoring
+* Redis caching
+* Real dataset labeling
+* Deployment (Render/Docker)
+* Monitoring dashboard
 
 ---
 
 # 🏁 Conclusion
 
-The Hybrid Log Intelligence System successfully combines:
+LogIQ successfully combines:
 
-> ⚡ Rule-based speed + 🧠 NLP learning + 🤖 LLM reasoning
+> ⚡ Speed (Rules) + 🧠 Learning (NLP) + 🤖 Reasoning (LLM)
 
-to deliver a **robust, efficient, and scalable log classification system** suitable for real-world applications.
+to build a **robust, scalable log intelligence system**.
 
 ---
