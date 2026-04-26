@@ -11,8 +11,6 @@ Dataset/
 # -----------------------------
 ai_engine/models/nlp/model.pkl
 ai_engine/models/nlp/vectorizer.pkl
-ai_engine/models/
-*.pkl
 *.npy
 *.index
 
