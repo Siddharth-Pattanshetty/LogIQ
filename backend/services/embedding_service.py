@@ -1,42 +1,53 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = None
 
-reference_logs = {
+REFERENCE = {
     "ERROR": [
         "system failure occurred",
-        "execution failed due to error",
-        "crash detected in service"
+        "execution failed",
+        "crash detected"
     ],
     "WARNING": [
-        "performance degradation detected",
+        "high latency detected",
         "retry attempts increasing",
         "timeout occurred"
     ],
     "INFO": [
         "system running normally",
-        "operation completed successfully"
+        "operation successful"
     ]
 }
 
-ref_embeddings = {
-    label: model.encode(texts)
-    for label, texts in reference_logs.items()
-}
+ref_emb = None
 
 
-def semantic_classify(log: str):
-    log_emb = model.encode([log])
+def load_model():
+    global model, ref_emb
+
+    if model is None:
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+
+        ref_emb = {
+            k: model.encode(v)
+            for k, v in REFERENCE.items()
+        }
+
+
+def semantic_classify(log):
+    load_model()  # 🔥 LAZY LOAD
+
+    emb = model.encode([log])
 
     best_label = None
     best_score = 0
 
-    for label, embeddings in ref_embeddings.items():
-        sim = cosine_similarity(log_emb, embeddings).max()
+    for label, vectors in ref_emb.items():
+        score = cosine_similarity(emb, vectors).max()
 
-        if sim > best_score:
-            best_score = sim
+        if score > best_score:
+            best_score = score
             best_label = label
 
     return best_label, float(best_score)
