@@ -7,12 +7,16 @@ Dataset/
 *.csv
 
 # -----------------------------
-# MODELS (CRITICAL - DO NOT PUSH)
+# GENERATED FILES
+# -----------------------------
+*.npy
+*.index
+
+# -----------------------------
+# UNUSED MODEL FILES (logiq_model.pkl IS pushed for deployment)
 # -----------------------------
 ai_engine/models/nlp/model.pkl
 ai_engine/models/nlp/vectorizer.pkl
-*.npy
-*.index
 
 # -----------------------------
 # PYTHON CACHE
@@ -52,7 +56,7 @@ Thumbs.db
 # -----------------------------
 *.tmp
 *.temp
-```
+
 # -----------------------------
 # Log files
 # -----------------------------

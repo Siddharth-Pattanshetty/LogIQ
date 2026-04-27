@@ -2,7 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 vectorizer = None
-reference_vectors = None
+reference_data = None  # List of (label, vector) tuples
 
 REFERENCE_LOGS = {
     "ERROR": [
@@ -26,7 +26,7 @@ REFERENCE_LOGS = {
 
 
 def load_embeddings():
-    global vectorizer, reference_vectors
+    global vectorizer, reference_data
 
     if vectorizer is None:
         vectorizer = TfidfVectorizer()
@@ -41,10 +41,13 @@ def load_embeddings():
 
         vectors = vectorizer.fit_transform(all_texts)
 
-        reference_vectors = {
-            label: vectors[i]
-            for i, label in enumerate(labels)
-        }
+        # Store ALL vectors as (label, vector) tuples — fixes the bug where
+        # the old dict approach overwrote entries with the same label key,
+        # reducing 11 reference vectors down to just 3.
+        reference_data = [
+            (labels[i], vectors[i])
+            for i in range(len(labels))
+        ]
 
 
 def semantic_classify(log: str):
@@ -55,7 +58,7 @@ def semantic_classify(log: str):
     best_label = None
     best_score = 0
 
-    for label, ref_vec in reference_vectors.items():
+    for label, ref_vec in reference_data:
         score = cosine_similarity(log_vec, ref_vec).max()
 
         if score > best_score:

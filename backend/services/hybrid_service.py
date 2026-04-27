@@ -1,16 +1,20 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.services.rule_services_v2 import rule_predict_v2
 from ai_engine.models.nlp.inference import predict_nlp
 from backend.services.embedding_service import semantic_classify
 from backend.services.llm_service import predict_llm
 
-
 from backend.services.cache_service import get_cache, set_cache
 from backend.services.rate_limiter import can_call_llm, increment_llm_calls
 from backend.services.metrics_service import update_metrics
 from backend.services.storage_service import save_prediction
 from backend.utils.logger import logger
+
+# Confidence thresholds — tune these to adjust layer routing
+RULE_CONFIDENCE_THRESHOLD = 0.9
+NLP_CONFIDENCE_THRESHOLD = 0.7
+EMBEDDING_SCORE_THRESHOLD = 0.6
 
 
 def format_response(result, explanation=None):
@@ -19,7 +23,7 @@ def format_response(result, explanation=None):
         "confidence": round(float(result.get("confidence", 0)), 2),
         "source": result.get("source"),
         "explanation": explanation,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 def hybrid_predict(log: str):
@@ -31,9 +35,12 @@ def hybrid_predict(log: str):
             logger.info("Cache hit")
             return cached
 
+        # =========================
+        # STEP 1: RULE-BASED ENGINE
+        # =========================
         rule_result = rule_predict_v2(log)
 
-        if rule_result["confidence"] >= 0.9:
+        if rule_result["confidence"] >= RULE_CONFIDENCE_THRESHOLD:
             update_metrics("rule")
 
             response = format_response(
@@ -45,9 +52,12 @@ def hybrid_predict(log: str):
             save_prediction(response)
             return response
 
+        # =========================
+        # STEP 2: NLP MODEL
+        # =========================
         nlp_result = predict_nlp(log)
 
-        if nlp_result["confidence"] >= 0.7:
+        if nlp_result["confidence"] >= NLP_CONFIDENCE_THRESHOLD:
             update_metrics("nlp")
 
             response = format_response(
@@ -59,9 +69,12 @@ def hybrid_predict(log: str):
             save_prediction(response)
             return response
 
+        # =========================
+        # STEP 3: SEMANTIC EMBEDDING
+        # =========================
         label, score = semantic_classify(log)
 
-        if score > 0.6:
+        if score > EMBEDDING_SCORE_THRESHOLD:
             update_metrics("embedding")
 
             response = format_response(
@@ -77,7 +90,10 @@ def hybrid_predict(log: str):
             save_prediction(response)
             return response
 
-        if can_call_llm() and score < 0.6:
+        # =========================
+        # STEP 4: LLM (GEMINI)
+        # =========================
+        if can_call_llm() and score < EMBEDDING_SCORE_THRESHOLD:
             try:
                 increment_llm_calls()
 
@@ -97,7 +113,7 @@ def hybrid_predict(log: str):
                 logger.error(f"LLM failed: {e}")
 
         # =========================
-        # 🔹 STEP 5: FINAL FALLBACK
+        # STEP 5: FINAL FALLBACK
         # =========================
         update_metrics("nlp")
 

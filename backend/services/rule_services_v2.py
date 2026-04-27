@@ -48,17 +48,27 @@ def get_final_label(scores):
             label = "WARNING"
 
     confidence = scores[label] / total
+    confidence = min(confidence, 1.0)  # Cap at 1.0 to prevent overflow from context boosts
 
     return label, round(confidence, 2)
 
+
 def extract_log_level(log):
-    if " error " in log:
+    """Extract explicit log level from common formats: ERROR, [ERROR], ERROR:, etc."""
+    match = re.search(r'\b(error)\b|\[(error)\]', log)
+    if match:
         return "ERROR"
-    elif " warn " in log:
+
+    match = re.search(r'\b(warn(?:ing)?)\b|\[(warn(?:ing)?)\]', log)
+    if match:
         return "WARNING"
-    elif " info " in log:
+
+    match = re.search(r'\b(info)\b|\[(info)\]', log)
+    if match:
         return "INFO"
+
     return None
+
 
 def rule_predict_v2(log):
     log = preprocess_log(log)
