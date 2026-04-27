@@ -3,7 +3,5 @@ uvicorn
 scikit-learn
 python-dotenv
 google-genai
-sentence-transformers
 streamlit
 requests
-torch

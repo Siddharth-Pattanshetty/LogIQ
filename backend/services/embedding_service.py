@@ -1,50 +1,62 @@
-from sentence_transformers import SentenceTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-model = None
+vectorizer = None
+reference_vectors = None
 
-REFERENCE = {
+REFERENCE_LOGS = {
     "ERROR": [
         "system failure occurred",
         "execution failed",
-        "crash detected"
+        "crash detected",
+        "exception occurred"
     ],
     "WARNING": [
         "high latency detected",
         "retry attempts increasing",
-        "timeout occurred"
+        "timeout occurred",
+        "performance degradation"
     ],
     "INFO": [
         "system running normally",
-        "operation successful"
+        "operation completed successfully",
+        "service started"
     ]
 }
 
-ref_emb = None
 
+def load_embeddings():
+    global vectorizer, reference_vectors
 
-def load_model():
-    global model, ref_emb
+    if vectorizer is None:
+        vectorizer = TfidfVectorizer()
 
-    if model is None:
-        model = SentenceTransformer('all-MiniLM-L6-v2')
+        all_texts = []
+        labels = []
 
-        ref_emb = {
-            k: model.encode(v)
-            for k, v in REFERENCE.items()
+        for label, texts in REFERENCE_LOGS.items():
+            for text in texts:
+                all_texts.append(text)
+                labels.append(label)
+
+        vectors = vectorizer.fit_transform(all_texts)
+
+        reference_vectors = {
+            label: vectors[i]
+            for i, label in enumerate(labels)
         }
 
 
-def semantic_classify(log):
-    load_model()  # 🔥 LAZY LOAD
+def semantic_classify(log: str):
+    load_embeddings()
 
-    emb = model.encode([log])
+    log_vec = vectorizer.transform([log])
 
     best_label = None
     best_score = 0
 
-    for label, vectors in ref_emb.items():
-        score = cosine_similarity(emb, vectors).max()
+    for label, ref_vec in reference_vectors.items():
+        score = cosine_similarity(log_vec, ref_vec).max()
 
         if score > best_score:
             best_score = score

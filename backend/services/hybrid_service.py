@@ -61,7 +61,7 @@ def hybrid_predict(log: str):
 
         label, score = semantic_classify(log)
 
-        if score > 0.65:
+        if score > 0.6:
             update_metrics("embedding")
 
             response = format_response(
