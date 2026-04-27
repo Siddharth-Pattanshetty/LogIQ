@@ -2,31 +2,30 @@ import os
 import pickle
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 MODEL_PATH = os.path.join(BASE_DIR, "logiq_model.pkl")
 
+data = pickle.load(open(MODEL_PATH, "rb"))
 
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
-model = pickle.load(open(MODEL_PATH, "rb"))
+model = data["model"]
+vectorizer = data["vectorizer"]
 
 
 def preprocess_log(log: str):
-    log = log.lower()
-    log = log.strip()
-    return log
+    return log.lower().strip()
 
 
 def predict_nlp(log: str):
     processed_log = preprocess_log(log)
 
-    pred = model.predict([processed_log])[0]
+    X = vectorizer.transform([processed_log])
+
+    pred = model.predict(X)[0]
 
     try:
-        prob = max(model.predict_proba([processed_log])[0])
+        prob = max(model.predict_proba(X)[0])
     except:
-        prob = 0.85  # fallback if not supported
+        prob = 0.85
 
     return {
         "label": pred,
